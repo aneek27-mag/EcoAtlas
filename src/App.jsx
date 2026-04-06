@@ -4,6 +4,7 @@ import AppLayout from './components/AppLayout'
 import { REGIONS, SPECIES, STATUS_COLOR } from './data/himalayaData'
 import useLiveConservationData from './hooks/useLiveConservationData'
 import ExplorePage from './pages/ExplorePage'
+import FoodChainPage from './pages/FoodChainPage'
 import HomePage from './pages/HomePage'
 import MapPage from './pages/MapPage'
 import SimulationPage from './pages/SimulationPage'
@@ -35,6 +36,7 @@ function App() {
           element={<MapPage regions={REGIONS} species={SPECIES} liveData={liveData} loading={loading} />}
         />
         <Route path="/explore" element={<ExplorePage regions={REGIONS} species={SPECIES} statusColor={STATUS_COLOR} />} />
+        <Route path="/food-chain" element={<FoodChainPage />} />
         <Route
           path="/tracker"
           element={

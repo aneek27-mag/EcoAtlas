@@ -15,6 +15,7 @@ function SimulationPage({ species, liveData, loading }) {
   const [grazingPressure, setGrazingPressure] = useState(38)
   const [policyStrength, setPolicyStrength] = useState(45)
   const [projectionYear, setProjectionYear] = useState(2040)
+  const [impactFilter, setImpactFilter] = useState('Balanced')
 
   const avgRegionalTemp = useMemo(() => {
     if (!liveData?.climate?.length) return 0
@@ -54,7 +55,22 @@ function SimulationPage({ species, liveData, loading }) {
     [species, futureStressors],
   )
 
-  const topLoss = projection.slice().sort((a, b) => a.change - b.change).slice(0, 6)
+  const topLoss = useMemo(() => {
+    const sorted = projection.slice().sort((a, b) => a.change - b.change)
+    const take = (list, count) => list.slice(0, count)
+
+    if (impactFilter === 'All') return take(sorted, 6)
+    if (impactFilter === 'Animal') return take(sorted.filter((item) => item.type === 'Animal'), 6)
+    if (impactFilter === 'Tree') return take(sorted.filter((item) => item.type === 'Tree'), 6)
+    if (impactFilter === 'Plant') return take(sorted.filter((item) => item.type === 'Plant'), 6)
+
+    const topAnimals = take(sorted.filter((item) => item.type === 'Animal'), 3)
+    const topNonAnimals = take(sorted.filter((item) => item.type !== 'Animal'), 3)
+    const selected = [...topAnimals, ...topNonAnimals]
+    const selectedIds = new Set(selected.map((item) => item.id))
+    const remaining = sorted.filter((item) => !selectedIds.has(item.id))
+    return [...selected, ...remaining].slice(0, 6).sort((a, b) => a.change - b.change)
+  }, [projection, impactFilter])
 
   const scenarioMetrics = useMemo(() => {
     if (!projection.length) {
@@ -193,6 +209,19 @@ function SimulationPage({ species, liveData, loading }) {
           <div className="impact-headline">
             <h3>Most Vulnerable Species Projections</h3>
             <p>Comparison of latest known population vs scenario output</p>
+
+            <div className="impact-filter-row" role="tablist" aria-label="Species projection filter">
+              {['Balanced', 'All', 'Animal', 'Tree', 'Plant'].map((filter) => (
+                <button
+                  key={filter}
+                  type="button"
+                  className={`impact-filter-btn ${impactFilter === filter ? 'active' : ''}`}
+                  onClick={() => setImpactFilter(filter)}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
 
             <div className="impact-legend" aria-hidden="true">
               <span>

@@ -6,6 +6,20 @@ function TrackerPage({ species, trackerMetrics, liveData, loading, error }) {
   const [filterRegion, setFilterRegion] = useState('All')
   const [filterType, setFilterType] = useState('All')
   const [filterRisk, setFilterRisk] = useState('All')
+  const [isReportOpen, setIsReportOpen] = useState(false)
+  const [reportSuccess, setReportSuccess] = useState('')
+  const [reportForm, setReportForm] = useState({
+    speciesName: '',
+    region: 'Ladakh',
+    location: '',
+    sightingDate: '',
+    count: '',
+    confidence: 'Medium',
+    proofFileName: '',
+    notes: '',
+    reporterName: '',
+    contact: '',
+  })
 
   const regions = useMemo(() => ['All', ...new Set(species.map((item) => item.region))], [species])
   const types = useMemo(() => ['All', ...new Set(species.map((item) => item.type))], [species])
@@ -63,6 +77,32 @@ function TrackerPage({ species, trackerMetrics, liveData, loading, error }) {
       topDecliners,
     }
   }, [filteredSpecies])
+
+  function updateReportField(field, value) {
+    setReportForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  function resetReportForm() {
+    setReportForm({
+      speciesName: '',
+      region: 'Ladakh',
+      location: '',
+      sightingDate: '',
+      count: '',
+      confidence: 'Medium',
+      proofFileName: '',
+      notes: '',
+      reporterName: '',
+      contact: '',
+    })
+  }
+
+  function handleReportSubmit(event) {
+    event.preventDefault()
+    setReportSuccess(`Sighting reported for ${reportForm.speciesName || 'selected species'} in ${reportForm.region}.`)
+    setIsReportOpen(false)
+    resetReportForm()
+  }
 
   return (
     <section className="page-panel">
@@ -230,6 +270,157 @@ function TrackerPage({ species, trackerMetrics, liveData, loading, error }) {
 
         {filteredSpecies.length === 0 ? <p className="trend-empty">No species match these filters.</p> : null}
       </div>
+
+      {reportSuccess ? <p className="report-feedback" role="status">{reportSuccess}</p> : null}
+
+      <button
+        type="button"
+        className="report-sighting-btn"
+        onClick={() => {
+          setIsReportOpen(true)
+          setReportSuccess('')
+        }}
+      >
+        Report a Sighting
+      </button>
+
+      {isReportOpen ? (
+        <div className="report-modal-backdrop" role="presentation" onClick={() => setIsReportOpen(false)}>
+          <section
+            className="report-modal glass"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="report-sighting-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="report-modal-head">
+              <h3 id="report-sighting-title">Report a Sighting</h3>
+              <button type="button" className="report-close-btn" onClick={() => setIsReportOpen(false)}>
+                Close
+              </button>
+            </div>
+
+            <form className="report-form" onSubmit={handleReportSubmit}>
+              <label>
+                Species Name
+                <input
+                  type="text"
+                  value={reportForm.speciesName}
+                  onChange={(event) => updateReportField('speciesName', event.target.value)}
+                  placeholder="Snow Leopard"
+                  required
+                />
+              </label>
+
+              <label>
+                Region
+                <select value={reportForm.region} onChange={(event) => updateReportField('region', event.target.value)}>
+                  {regions.filter((region) => region !== 'All').map((region) => (
+                    <option key={region}>{region}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Location Details
+                <input
+                  type="text"
+                  value={reportForm.location}
+                  onChange={(event) => updateReportField('location', event.target.value)}
+                  placeholder="Village, trail, reserve, or coordinates"
+                  required
+                />
+              </label>
+
+              <label>
+                Sighting Date
+                <input
+                  type="date"
+                  value={reportForm.sightingDate}
+                  onChange={(event) => updateReportField('sightingDate', event.target.value)}
+                  required
+                />
+              </label>
+
+              <label>
+                Number Observed
+                <input
+                  type="number"
+                  min="1"
+                  value={reportForm.count}
+                  onChange={(event) => updateReportField('count', event.target.value)}
+                  placeholder="1"
+                  required
+                />
+              </label>
+
+              <label>
+                Confidence
+                <select
+                  value={reportForm.confidence}
+                  onChange={(event) => updateReportField('confidence', event.target.value)}
+                >
+                  <option>High</option>
+                  <option>Medium</option>
+                  <option>Low</option>
+                </select>
+              </label>
+
+              <label>
+                Proof Upload
+                <input
+                  type="file"
+                  accept="image/*,video/*,.pdf"
+                  onChange={(event) =>
+                    updateReportField('proofFileName', event.target.files?.[0]?.name ?? '')
+                  }
+                  required
+                />
+                {reportForm.proofFileName ? <small>Selected: {reportForm.proofFileName}</small> : null}
+              </label>
+
+              <label className="report-span-2">
+                Notes
+                <textarea
+                  value={reportForm.notes}
+                  onChange={(event) => updateReportField('notes', event.target.value)}
+                  rows={3}
+                  placeholder="Behavior, habitat, weather, or potential threats"
+                />
+              </label>
+
+              <label>
+                Reporter Name
+                <input
+                  type="text"
+                  value={reportForm.reporterName}
+                  onChange={(event) => updateReportField('reporterName', event.target.value)}
+                  placeholder="Optional"
+                />
+              </label>
+
+              <label>
+                Contact (email/phone)
+                <input
+                  type="text"
+                  value={reportForm.contact}
+                  onChange={(event) => updateReportField('contact', event.target.value)}
+                  placeholder="Optional"
+                />
+              </label>
+
+              <div className="report-actions report-span-2">
+                <button type="button" className="ghost-btn" onClick={() => setIsReportOpen(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="report-submit-btn">
+                  Submit Report
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
     </section>
   )
 }
